@@ -1,0 +1,118 @@
+﻿@page "/"
+
+@using BlazorUsersJsonPlaceHolderApi.Models
+@using System.Text.Json
+@inject HttpClient Http
+@implements IDisposable
+
+<PageTitle>Primeiro usuário | JSONPlaceholder</PageTitle>
+<h1>Primeiro usuário</h1>
+<p>Nome, cidade e empresa da primeira pessoa retornada pela API JSONPlaceholder.</p>
+
+<button type="button" class="btn btn-primary" @onclick="CarregarUsuario" disabled="@carregando">
+    @(carregando ? "Consultando..." : "Consultar novamente")
+</button>
+
+@if (carregando)
+{
+    <p class="mt-4" role="status">Carregando a lista de usuários. Aguarde...</p>
+}
+@if (!string.IsNullOrEmpty(mensagemErro))
+{
+    <div class="alert alert-danger mt-4" role="alert">@mensagemErro</div>
+}
+@if (primeiroUsuario is not null)
+{
+    <section class="card mt-4 resultado" aria-labelledby="resultadoTitulo" aria-live="polite">
+        <div class="card-body">
+            <h2 id="resultadoTitulo" class="h4">Dados da primeira pessoa</h2>
+            <p><strong>Nome:</strong> @primeiroUsuario.Nome</p>
+            <p><strong>Cidade:</strong> @Exibir(primeiroUsuario.Endereco?.Cidade)</p>
+            <p class="mb-0"><strong>Empresa:</strong> @Exibir(primeiroUsuario.Empresa?.Nome)</p>
+        </div>
+    </section>
+}
+
+@code {
+    private Usuario? primeiroUsuario;
+    private string mensagemErro = string.Empty;
+    private bool carregando;
+    private readonly CancellationTokenSource cancelamento = new();
+
+    protected override Task OnInitializedAsync() => CarregarUsuario();
+
+    private async Task CarregarUsuario()
+    {
+        if (carregando)
+        {
+            return;
+        }
+        primeiroUsuario = null;
+        mensagemErro = string.Empty;
+        carregando = true;
+
+        try
+        {
+            var usuarios = await Http.GetFromJsonAsync<List<Usuario?>>(
+                "https://jsonplaceholder.typicode.com/users", cancelamento.Token);
+
+            if (usuarios is null)
+            {
+                mensagemErro = "A API retornou uma resposta vazia. Tente novamente.";
+                return;
+            }
+            if (usuarios.Count == 0)
+            {
+                mensagemErro = "Nenhum usuário foi retornado pela API.";
+                return;
+            }
+
+            // Preserva a ordem da lista: não filtra por ID nem pula a primeira posição.
+            var usuario = usuarios[0];
+            if (usuario is null || string.IsNullOrWhiteSpace(usuario.Nome))
+            {
+                mensagemErro = "Os dados da primeira pessoa estão inválidos. Tente novamente.";
+                return;
+            }
+
+            primeiroUsuario = usuario;
+            // No Blazor WebAssembly, Console.WriteLine escreve no console do navegador.
+            Console.WriteLine($"Nome: {usuario.Nome}");
+            Console.WriteLine($"Cidade: {Exibir(usuario.Endereco?.Cidade)}");
+            Console.WriteLine($"Empresa: {Exibir(usuario.Empresa?.Nome)}");
+        }
+        catch (OperationCanceledException) when (cancelamento.IsCancellationRequested)
+        {
+            // O componente foi encerrado; a consulta pendente é cancelada.
+        }
+        catch (OperationCanceledException)
+        {
+            mensagemErro = "A consulta demorou demais. Tente novamente em alguns instantes.";
+        }
+        catch (HttpRequestException)
+        {
+            mensagemErro = "Não foi possível consultar a API. Verifique sua conexão e tente novamente.";
+        }
+        catch (JsonException)
+        {
+            mensagemErro = "A API retornou um JSON inválido. Tente novamente.";
+        }
+        catch (Exception)
+        {
+            mensagemErro = "Ocorreu um erro ao consultar os usuários. Tente novamente.";
+        }
+        finally
+        {
+            carregando = false;
+        }
+    }
+
+    private static string Exibir(string? valor) =>
+        string.IsNullOrWhiteSpace(valor) ? "Não informado pela API" : valor;
+
+    public void Dispose()
+    {
+        cancelamento.Cancel();
+        cancelamento.Dispose();
+    }
+}
