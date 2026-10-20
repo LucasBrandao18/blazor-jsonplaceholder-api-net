@@ -1,7 +1,5 @@
 # BlazorUsersJsonPlaceHolderApi
 
-Aplicação Blazor WebAssembly em C# e .NET 10, desenvolvida com base no arquivo **lista.pdf**.
-
 ## O que foi solicitado
 
 A atividade pede criar uma aplicação Blazor que consulte a lista de usuários em [JSONPlaceholder — /users](https://jsonplaceholder.typicode.com/users) e imprima o **nome**, a **cidade** e a **empresa da primeira pessoa da lista** no console.
