@@ -81,5 +81,3 @@ dotnet test "tests\BlazorUsersJsonPlaceHolderApi.Tests\BlazorUsersJsonPlaceHolde
 Foram implementados e aprovados **13 testes**, cobrindo a consulta automática, o endereço correto da API, a preservação da primeira posição da lista, respostas vazias ou inválidas, campos opcionais ausentes, falhas HTTP/rede, tempo limite, nova tentativa e estado de carregamento.
 
 Os testes usam respostas HTTP simuladas para não depender da disponibilidade da API. A consulta real também foi validada no navegador, incluindo a saída no console e o botão de nova consulta. A pasta `tests` é excluída dos arquivos do aplicativo principal pelo `.csproj`, portanto os testes não são enviados como parte do aplicativo ao navegador.
-
-O `.gitignore` ignora arquivos de compilação como `bin/` e `obj/`, facilitando a publicação manual do código-fonte.
